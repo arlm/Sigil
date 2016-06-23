@@ -55,16 +55,7 @@ namespace Sigil.Impl
                 var metadataReader = peReader.GetMetadataReader();
                 var methodHandle = MetadataTokens.MethodDefinitionHandle(metadataToken);
                 var methodDefinition = metadataReader.GetMethodDefinition(methodHandle);
-
-                //LocalVariableInfo
-
-
                 var methodBody = peReader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
-
-                // metadataReader.LocalVariables
-
-                //methodBody.ExceptionRegions[0].CatchType
-
                 return methodBody.GetILBytes();
             }
         }
@@ -97,25 +88,10 @@ namespace Sigil.Impl
 
         public static IList<LocalVariable> GetLocalVariables(MethodInfo methodInfo)
         {
-            var metadataToken = methodInfo.GetMetadataToken();
-
             using (var stream = File.OpenRead(methodInfo.DeclaringType.GetTypeInfo().Assembly.Location))
             using (var peReader = new PEReader(stream))
             {
                 var metadataReader = peReader.GetMetadataReader();
-                //var methodHandle = MetadataTokens.MethodDefinitionHandle(metadataToken);
-                //var methodDefinition = metadataReader.GetMethodDefinition(methodHandle);
-
-                //methodDefinition.
-
-                //LocalVariableInfo
-
-
-                //var methodBody = peReader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
-
-                // metadataReader.LocalVariables
-
-
                 return metadataReader.LocalVariables.Select(x =>
                 {
                     var localVariable = metadataReader.GetLocalVariable(x);
@@ -127,14 +103,6 @@ namespace Sigil.Impl
                         // TODO: Get over data
                     };
                 }).ToList();
-
-                //metadataReader.GetLocalVariable(metadataReader.LocalVariables.First()).;
-
-                ////methodBody.ExceptionRegions[0].CatchType
-
-                //new LocalVariableInfo().
-
-                //return methodBody.GetILBytes();
             }
         }
 #else
