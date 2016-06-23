@@ -93,6 +93,10 @@ namespace SigilTests
         {
             Xunit.Assert.True(value);
         }
+        public static void IsTrue(bool value, string message)
+        {
+            Xunit.Assert.True(value, message);
+        }
         public static void Fail()
         {
             Xunit.Assert.Equal("pass", "fail");

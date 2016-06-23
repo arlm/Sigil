@@ -1,5 +1,4 @@
-﻿#if !COREFXTODO // see https://github.com/dotnet/corefx/issues/4543 item 1
-using Sigil.Impl;
+﻿using Sigil.Impl;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -36,7 +35,7 @@ namespace Sigil
             var oneByte = new LinqList<OpCode>();
             var twoByte = new LinqList<OpCode>();
 
-            foreach(var field in typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static))
+            foreach (var field in typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static))
             {
                 var op = (OpCode)field.GetValue(null);
 
@@ -65,11 +64,12 @@ namespace Sigil
 
             var baseTypes = new LinqHashSet<Type>();
             baseTypes.Add(delType);
-            var bType = delType.BaseType;
+
+            var bType = TypeHelpers.GetBaseType(delType);
             while (bType != null)
             {
                 baseTypes.Add(bType);
-                bType = bType.BaseType;
+                bType = TypeHelpers.GetBaseType(bType);
             }
 
             if (!baseTypes.Contains(typeof(Delegate)))
@@ -88,13 +88,13 @@ namespace Sigil
 
             var asDel = (Delegate)(object)del;
 
-            var method = asDel.Method;
-            var body = method.GetMethodBody();
+            var method = DelegateHelpers.GetMethodInfo(asDel);
+            //var body = method.GetMethodBody();
 
-            var cil = body.GetILAsByteArray();
-            var locals = body.LocalVariables;
-            var @params = asDel.Method.GetParameters();
-            var excBlocks = body.ExceptionHandlingClauses;
+            var cil = MethodHelpers.GetILBytes(method);
+            var locals = MethodHelpers.GetLocalVariables(method);
+            var @params = method.GetParameters();
+            var excBlocks = MethodHelpers.GetExceptionClauses(method);
 
             var convertedParams = new LinqList<ParameterInfo>(@params).Select(s => Parameter.For(s)).ToList();
 
@@ -105,18 +105,18 @@ namespace Sigil
 
             var ps = convertedParams.AsEnumerable();
 
-            var ls = 
-                new LinqList<LocalVariableInfo>(locals)
+            var ls =
+                new LinqList<MethodHelpers.LocalVariable>(locals)
                     .OrderBy(_ => _.LocalIndex)
-                    .Select((l, ix) => new Local(null, (ushort)l.LocalIndex, l.LocalType, null, "_local"+ix, null, 0))
+                    .Select((l, ix) => new Local(null, (ushort)l.LocalIndex, l.LocalType, null, "_local" + ix, null, 0))
                     .ToList().AsEnumerable();
 
             var labels = new LabelTracker();
             var asLabels = new List<Label>();
             var needsInference = new List<SigilTuple<int, Operation<DelegateType>>>();
-            var ops = 
+            var ops =
                 new List<SigilTuple<int, Operation<DelegateType>>>(
-                    GetOperations(asDel.Method.Module, cil, ps, ls, labels, excBlocks, asLabels, needsInference)
+                    GetOperations(method.Module, cil, ps, ls, labels, excBlocks, asLabels, needsInference)
                 );
 
             var markAt = new Dictionary<int, SigilTuple<int, string>>();
@@ -171,11 +171,11 @@ namespace Sigil
                 // check to see if we actually use `this`, and if so we can't actually emit
                 foreach (var op in ops)
                 {
-                    if(op.Item2.IsOpCode)
+                    if (op.Item2.IsOpCode)
                     {
                         var opcode = op.Item2.OpCode;
 
-                        if(opcode == OpCodes.Ldarg_0)
+                        if (opcode == OpCodes.Ldarg_0)
                         {
                             usesThis = true;
                             break;
@@ -224,8 +224,8 @@ namespace Sigil
 
             return
                 new DisassembledOperations<DelegateType>(
-                    new List<Operation<DelegateType>>(new LinqList<SigilTuple<int, Operation<DelegateType>>>(ops).Select(d => d.Item2).AsEnumerable()), 
-                    ps, 
+                    new List<Operation<DelegateType>>(new LinqList<SigilTuple<int, Operation<DelegateType>>>(ops).Select(d => d.Item2).AsEnumerable()),
+                    ps,
                     ls,
                     asLabels,
                     canBeEmitted
@@ -267,7 +267,7 @@ namespace Sigil
 
                 infer.RemoveAt(0);
 
-                if(op != null)
+                if (op != null)
                 {
                     var replaceAt = ops.IndexOf(toReplace);
                     ops[replaceAt] = SigilTuple.Create(toReplace.Item1, op);
@@ -365,7 +365,7 @@ namespace Sigil
 
             foreach (var group in grouped.OrderBy(o => o.Key).AsEnumerable())
             {
-                var inOrder = 
+                var inOrder =
                     LinqAlternative.OrderBy<Operation<DelegateType>, int>(
                         LinqAlternative.Select(group, _ => _.Item2).AsEnumerable(),
                         op =>
@@ -377,7 +377,7 @@ namespace Sigil
                             if (op.IsExceptionBlockStart) return -100;
                             if (op.IsCatchBlockStart) return -10;
                             if (op.IsFinallyBlockStart) return -1;
-                            
+
                             if (op.IsMarkLabel) return 0;
 
                             return 1;
@@ -420,7 +420,7 @@ namespace Sigil
             throw new Exception("Couldn't find label position in operations for " + ix);
         }
 
-        private static int DeclarationNumber(Dictionary<int, LinqList<ExceptionHandlingClause>> start, ExceptionHandlingClause exc)
+        private static int DeclarationNumber(Dictionary<int, LinqList<MethodHelpers.ExceptionClause>> start, MethodHelpers.ExceptionClause exc)
         {
             var order = LinqAlternative.Select(start.Keys, _ => _).OrderBy(_ => _).ToList().AsEnumerable();
 
@@ -446,55 +446,55 @@ namespace Sigil
         }
 
         private static IEnumerable<SigilTuple<int, Operation<DelegateType>>> GetOperations(
-            Module mod, 
-            byte[] cil, 
-            IEnumerable<Parameter> ps, 
-            IEnumerable<Local> ls, 
-            LabelTracker labels, 
-            IList<ExceptionHandlingClause> exceptions, 
+            Module mod,
+            byte[] cil,
+            IEnumerable<Parameter> ps,
+            IEnumerable<Local> ls,
+            LabelTracker labels,
+            IEnumerable<MethodHelpers.ExceptionClause> exceptions,
             List<Label> labelAccumulator,
             List<SigilTuple<int, Operation<DelegateType>>> needsInference)
         {
-            var exceptionStart = new Dictionary<int, LinqList<ExceptionHandlingClause>>();
-            var exceptionEnd = new Dictionary<int, LinqList<ExceptionHandlingClause>>();
-            var catchStart = new Dictionary<int, LinqList<ExceptionHandlingClause>>();
-            var catchEnd = new Dictionary<int, LinqList<ExceptionHandlingClause>>();
-            var finallyStart = new Dictionary<int, LinqList<ExceptionHandlingClause>>();
-            var finallyEnd = new Dictionary<int, LinqList<ExceptionHandlingClause>>();
+            var exceptionStart = new Dictionary<int, LinqList<MethodHelpers.ExceptionClause>>();
+            var exceptionEnd = new Dictionary<int, LinqList<MethodHelpers.ExceptionClause>>();
+            var catchStart = new Dictionary<int, LinqList<MethodHelpers.ExceptionClause>>();
+            var catchEnd = new Dictionary<int, LinqList<MethodHelpers.ExceptionClause>>();
+            var finallyStart = new Dictionary<int, LinqList<MethodHelpers.ExceptionClause>>();
+            var finallyEnd = new Dictionary<int, LinqList<MethodHelpers.ExceptionClause>>();
 
-            var activeExceptionBlocks = new Dictionary<ExceptionHandlingClause, string>();
-            var activeCatchBlocks = new Dictionary<ExceptionHandlingClause, string>();
-            var activeFinallyBlocks = new Dictionary<ExceptionHandlingClause, string>();
+            var activeExceptionBlocks = new Dictionary<MethodHelpers.ExceptionClause, string>();
+            var activeCatchBlocks = new Dictionary<MethodHelpers.ExceptionClause, string>();
+            var activeFinallyBlocks = new Dictionary<MethodHelpers.ExceptionClause, string>();
 
             foreach (var exc in exceptions)
             {
-                LinqList<ExceptionHandlingClause> eStart, eEnd;
+                LinqList<MethodHelpers.ExceptionClause> eStart, eEnd;
 
                 if (!exceptionStart.TryGetValue(exc.TryOffset, out eStart))
                 {
-                    exceptionStart[exc.TryOffset] = eStart = new LinqList<ExceptionHandlingClause>();
+                    exceptionStart[exc.TryOffset] = eStart = new LinqList<MethodHelpers.ExceptionClause>();
                 }
 
-                if(!exceptionEnd.TryGetValue(exc.HandlerOffset + exc.HandlerLength, out eEnd))
+                if (!exceptionEnd.TryGetValue(exc.HandlerOffset + exc.HandlerLength, out eEnd))
                 {
-                    exceptionEnd[exc.HandlerOffset + exc.HandlerLength] = eEnd = new LinqList<ExceptionHandlingClause>();
+                    exceptionEnd[exc.HandlerOffset + exc.HandlerLength] = eEnd = new LinqList<MethodHelpers.ExceptionClause>();
                 }
 
                 eStart.Add(exc);
                 eEnd.Add(exc);
 
-                if (exc.Flags == ExceptionHandlingClauseOptions.Clause)
+                if (exc.Kind == MethodHelpers.ExceptionClauseKind.Catch)
                 {
-                    LinqList<ExceptionHandlingClause> cStart, cEnd;
+                    LinqList<MethodHelpers.ExceptionClause> cStart, cEnd;
 
                     if (!catchStart.TryGetValue(exc.HandlerOffset, out cStart))
                     {
-                        catchStart[exc.HandlerOffset] = cStart = new LinqList<ExceptionHandlingClause>();
+                        catchStart[exc.HandlerOffset] = cStart = new LinqList<MethodHelpers.ExceptionClause>();
                     }
 
                     if (!catchEnd.TryGetValue(exc.HandlerOffset + exc.HandlerLength, out cEnd))
                     {
-                        catchEnd[exc.HandlerOffset + exc.HandlerLength] = cEnd = new LinqList<ExceptionHandlingClause>();
+                        catchEnd[exc.HandlerOffset + exc.HandlerLength] = cEnd = new LinqList<MethodHelpers.ExceptionClause>();
                     }
 
                     cStart.Add(exc);
@@ -503,18 +503,18 @@ namespace Sigil
                     continue;
                 }
 
-                if (exc.Flags == ExceptionHandlingClauseOptions.Finally)
+                if (exc.Kind == MethodHelpers.ExceptionClauseKind.Finally)
                 {
-                    LinqList<ExceptionHandlingClause> fStart, fEnd;
+                    LinqList<MethodHelpers.ExceptionClause> fStart, fEnd;
 
                     if (!finallyStart.TryGetValue(exc.HandlerOffset, out fStart))
                     {
-                        finallyStart[exc.HandlerOffset] = fStart = new LinqList<ExceptionHandlingClause>();
+                        finallyStart[exc.HandlerOffset] = fStart = new LinqList<MethodHelpers.ExceptionClause>();
                     }
 
                     if (!finallyEnd.TryGetValue(exc.HandlerOffset + exc.HandlerLength, out fEnd))
                     {
-                        finallyEnd[exc.HandlerOffset + exc.HandlerLength] = fEnd = new LinqList<ExceptionHandlingClause>();
+                        finallyEnd[exc.HandlerOffset + exc.HandlerLength] = fEnd = new LinqList<MethodHelpers.ExceptionClause>();
                     }
 
                     fStart.Add(exc);
@@ -612,15 +612,15 @@ namespace Sigil
 
         private static void CheckForExceptionOperations(
             int i,
-            Dictionary<int, LinqList<ExceptionHandlingClause>> exceptionStart,
-            Dictionary<int, LinqList<ExceptionHandlingClause>> exceptionEnd,
-            Dictionary<int, LinqList<ExceptionHandlingClause>> catchStart,
-            Dictionary<int, LinqList<ExceptionHandlingClause>> catchEnd,
-            Dictionary<int, LinqList<ExceptionHandlingClause>> finallyStart,
-            Dictionary<int, LinqList<ExceptionHandlingClause>> finallyEnd, 
-            Dictionary<ExceptionHandlingClause, string> activeExceptionBlocks,
-            Dictionary<ExceptionHandlingClause, string> activeCatchBlocks,
-            Dictionary<ExceptionHandlingClause, string> activeFinallyBlocks,
+            Dictionary<int, LinqList<MethodHelpers.ExceptionClause>> exceptionStart,
+            Dictionary<int, LinqList<MethodHelpers.ExceptionClause>> exceptionEnd,
+            Dictionary<int, LinqList<MethodHelpers.ExceptionClause>> catchStart,
+            Dictionary<int, LinqList<MethodHelpers.ExceptionClause>> catchEnd,
+            Dictionary<int, LinqList<MethodHelpers.ExceptionClause>> finallyStart,
+            Dictionary<int, LinqList<MethodHelpers.ExceptionClause>> finallyEnd,
+            Dictionary<MethodHelpers.ExceptionClause, string> activeExceptionBlocks,
+            Dictionary<MethodHelpers.ExceptionClause, string> activeCatchBlocks,
+            Dictionary<MethodHelpers.ExceptionClause, string> activeFinallyBlocks,
             List<SigilTuple<int, Operation<DelegateType>>> ret)
         {
             if (catchEnd.ContainsKey(i))
@@ -762,12 +762,12 @@ namespace Sigil
         }
 
         private static int ReadOp(
-            Module mod, 
-            byte[] cil, 
-            int ix, 
-            IDictionary<int, Parameter> pLookup, 
-            IDictionary<int, Local> lLookup, 
-            PrefixTracker prefixes, 
+            Module mod,
+            byte[] cil,
+            int ix,
+            IDictionary<int, Parameter> pLookup,
+            IDictionary<int, Local> lLookup,
+            PrefixTracker prefixes,
             LabelTracker labels,
             List<Label> labelAccumulator,
             out Operation<DelegateType> op)
@@ -814,9 +814,9 @@ namespace Sigil
         }
 
         private static Operation<DelegateType> MakeReplayableOperation(
-            OpCode op, 
-            object[] operands, 
-            PrefixTracker prefixes, 
+            OpCode op,
+            object[] operands,
+            PrefixTracker prefixes,
             LabelTracker labels,
             List<Label> labelAccumulator,
             IDictionary<int, Local> locals)
@@ -2201,6 +2201,7 @@ namespace Sigil
                     };
             }
 
+#if !COREFXTODO
             if (op == OpCodes.Ldind_I4)
             {
                 var type = typeof(int);
@@ -2215,6 +2216,7 @@ namespace Sigil
                         Replay = emit => emit.LoadIndirect(type, isVolatile, unaligned)
                     };
             }
+#endif
 
             if (op == OpCodes.Ldind_I8)
             {
@@ -2586,6 +2588,7 @@ namespace Sigil
                     };
             }
 
+#if !COREFXTODO
             if (op == OpCodes.Mkrefany)
             {
                 var type = (Type)operands[0];
@@ -2597,6 +2600,7 @@ namespace Sigil
                         Replay = emit => emit.MakeReferenceAny(type)
                     };
             }
+#endif
 
             if (op == OpCodes.Mul)
             {
@@ -2721,6 +2725,7 @@ namespace Sigil
                 return null;
             }
 
+#if !COREFXTODO
             if (op == OpCodes.Refanytype)
             {
                 return
@@ -2743,6 +2748,7 @@ namespace Sigil
                         Replay = emit => emit.ReferenceAnyValue(type)
                     };
             }
+#endif
 
             if (op == OpCodes.Rem)
             {
@@ -3248,7 +3254,7 @@ namespace Sigil
             {
                 var swLabls = new Label[operands.Length];
 
-                for(var i = 0; i < operands.Length; i++)
+                for (var i = 0; i < operands.Length; i++)
                 {
                     var abs = (int)operands[i];
                     var label = ChooseLabel(abs, labels, labelAccumulator);
@@ -3336,7 +3342,7 @@ namespace Sigil
         private static long ReadLong(byte[] cil, int at)
         {
             var a = (uint)(cil[at] | (cil[at + 1] << 8) | (cil[at + 2] << 16) | (cil[at + 3] << 24));
-            var b = (uint)(cil[at+4] | (cil[at + 5] << 8) | (cil[at + 6] << 16) | (cil[at + 7] << 24));
+            var b = (uint)(cil[at + 4] | (cil[at + 5] << 8) | (cil[at + 6] << 16) | (cil[at + 7] << 24));
 
             return (((long)b) << 32) | a;
         }
@@ -3432,6 +3438,7 @@ namespace Sigil
                     var jumpTarget2 = instrStart + advance + offset2;
                     return new object[] { jumpTarget2 };
 
+#if !COREFXTODO
                 case OperandType.InlineField:
                 case OperandType.InlineTok:
                 case OperandType.InlineType:
@@ -3439,6 +3446,7 @@ namespace Sigil
                     advance += 4;
                     var mem = mod.ResolveMember(ReadInt(cil, operandStart));
                     return new object[] { mem };
+#endif
 
                 case OperandType.InlineI:
                     advance += 4;
@@ -3447,28 +3455,32 @@ namespace Sigil
                 case OperandType.InlineI8:
                     advance += 8;
                     return new object[] { ReadLong(cil, operandStart) };
-                
-                case OperandType.InlineNone: 
+
+                case OperandType.InlineNone:
                     return new object[0];
-                
+
                 case OperandType.InlineR:
                     advance += 8;
                     return new object[] { ReadDouble(cil, operandStart) };
 
+#if !COREFXTODO
                 case OperandType.InlineSig:
                     advance += 4;
                     var sig = mod.ResolveSignature(ReadInt(cil, operandStart));
                     return new object[] { sig };
+#endif
 
+#if !COREFXTODO
                 case OperandType.InlineString:
                     advance += 4;
                     var str = mod.ResolveString(ReadInt(cil, operandStart));
                     return new object[] { str };
-                 
+#endif
+
                 case OperandType.InlineVar:
                     advance += 2;
                     return new object[] { ReadShort(cil, operandStart) };
-                
+
                 case OperandType.ShortInlineI:
                     advance += 1;
                     if (op == OpCodes.Ldc_I4_S)
@@ -3490,14 +3502,13 @@ namespace Sigil
                     {
                         return new object[] { ReadShort(cil, operandStart) };
                     }
- 
+
                 case OperandType.ShortInlineVar:
                     advance += 1;
                     return new object[] { cil[operandStart] };
-                
+
                 default: throw new Exception("Unexpected operand type [" + op.OperandType + "]");
             }
         }
     }
 }
-#endif
