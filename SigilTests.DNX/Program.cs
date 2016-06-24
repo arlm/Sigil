@@ -4,7 +4,7 @@
     {
         public static void Main()
         {
-            System.Console.WriteLine("please use: dnx test");
+            System.Console.WriteLine("please use: dotnet test");
         }
     }
 }
