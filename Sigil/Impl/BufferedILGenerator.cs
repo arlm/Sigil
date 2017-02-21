@@ -998,6 +998,9 @@ namespace Sigil.Impl
                         ret(il);
                     }
 
+                    if (log == null)
+                        return;
+
                     log.AppendLine("--BeginExceptionBlock--");
                 }
             );
