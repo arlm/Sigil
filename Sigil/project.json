@@ -1,4 +1,4 @@
-﻿{
+{
   "packOptions": {
     "summary": "A fail-fast validation helper for .NET CIL generation.",
     "tags": [ "cil msil il bytecode" ],

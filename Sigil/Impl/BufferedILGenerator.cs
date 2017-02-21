@@ -76,9 +76,11 @@ namespace Sigil.Impl
         {
         }
 
-        public string UnBuffer(ILGenerator il)
+        public string UnBuffer(ILGenerator il, bool logInstructions = true)
         {
-            var log = new StringBuilder();
+            StringBuilder log = null;
+            if (logInstructions)
+                log = new StringBuilder();
 
             // First thing will always be a Mark for tracing purposes; no reason to actually do it
             for(var i = 2; i < Buffer.Count; i++)
@@ -88,7 +90,9 @@ namespace Sigil.Impl
                 x(il, false, log);
             }
 
-            return log.ToString();
+            if (log != null)
+                return log.ToString();
+            return null;
         }
 
         private Dictionary<int, int> LengthCache = new Dictionary<int, int>();
@@ -253,6 +257,9 @@ namespace Sigil.Impl
                         il.Emit(op);
                     }
 
+                    if (log == null)
+                        return;
+
                     if (ExtensionMethods.IsPrefix(op))
                     {
                         log.Append(op.ToString());
@@ -289,6 +296,9 @@ namespace Sigil.Impl
                         il.Emit(op);
                     }
 
+                    if (log == null)
+                        return;
+
                     if (ExtensionMethods.IsPrefix(op))
                     {
                         log.Append(op.ToString());
@@ -318,6 +328,9 @@ namespace Sigil.Impl
                     {
                         il.Emit(op, b);
                     }
+
+                    if (log == null)
+                        return;
 
                     if (ExtensionMethods.IsPrefix(op))
                     {
@@ -349,6 +362,9 @@ namespace Sigil.Impl
                         il.Emit(op, s);
                     }
 
+                    if (log == null)
+                        return;
+
                     if (ExtensionMethods.IsPrefix(op))
                     {
                         log.Append(op + "" + s + ".");
@@ -378,6 +394,9 @@ namespace Sigil.Impl
                     {
                         il.Emit(op, i);
                     }
+
+                    if (log == null)
+                        return;
 
                     if (ExtensionMethods.IsPrefix(op))
                     {
@@ -414,7 +433,10 @@ namespace Sigil.Impl
                     {
                         il.Emit(op, asInt);
                     }
-                    
+
+                    if (log == null)
+                        return;
+
                     log.AppendLine(op + " " + ui);
                 }
             );
@@ -437,7 +459,10 @@ namespace Sigil.Impl
                     {
                         il.Emit(op, l);
                     }
-                    
+
+                    if (log == null)
+                        return;
+
                     log.AppendLine(op + " " + l); 
                 }
             );
@@ -466,7 +491,10 @@ namespace Sigil.Impl
                     {
                         il.Emit(op, asLong);
                     }
-                    
+
+                    if (log == null)
+                        return;
+
                     log.AppendLine(op + " " + ul); 
                 }
             );
@@ -489,7 +517,10 @@ namespace Sigil.Impl
                     {
                         il.Emit(op, f);
                     }
-                    
+
+                    if (log == null)
+                        return;
+
                     log.AppendLine(op + " " + f); 
                 }
             );
@@ -512,7 +543,10 @@ namespace Sigil.Impl
                     {
                         il.Emit(op, d);
                     }
-                    
+
+                    if (log == null)
+                        return;
+
                     log.AppendLine(op + " " + d);
                 });
 
@@ -534,6 +568,9 @@ namespace Sigil.Impl
                     {
                         il.Emit(op, method);
                     }
+
+                    if (log == null)
+                        return;
 
                     var mtdString = method is MethodBuilder ? method.Name : method.ToString();
 
@@ -573,6 +610,9 @@ namespace Sigil.Impl
                         il.Emit(op, cons);
                     }
 
+                    if (log == null)
+                        return;
+
                     var mtdString = cons is ConstructorBuilder ? cons.Name : cons.ToString();
 
                     log.AppendLine(op + " " + mtdString);
@@ -608,7 +648,10 @@ namespace Sigil.Impl
                     {
                         il.Emit(op, cons);
                     }
-                    
+
+                    if (log == null)
+                        return;
+
                     log.AppendLine(op + " " + cons); 
                 }
             );
@@ -631,6 +674,9 @@ namespace Sigil.Impl
                     {
                         il.Emit(op, type);
                     }
+
+                    if (log == null)
+                        return;
 
                     log.AppendLine(op + " " + type); 
                 }
@@ -655,6 +701,9 @@ namespace Sigil.Impl
                         il.Emit(op, field);
                     }
 
+                    if (log == null)
+                        return;
+
                     log.AppendLine(op + " " + field); 
                 }
             );
@@ -677,7 +726,10 @@ namespace Sigil.Impl
                     {
                         il.Emit(op, str);
                     }
-                    
+
+                    if (log == null)
+                        return;
+
                     log.AppendLine(op + " '" + str.Replace("'", @"\'") + "'");
                 }
             );
@@ -712,6 +764,9 @@ namespace Sigil.Impl
                         il.Emit(localOp, l);
                     }
 
+                    if (log == null)
+                        return;
+
                     log.AppendLine(localOp + " " + label);
                 }
             );
@@ -745,6 +800,9 @@ namespace Sigil.Impl
                         var ls = LinqAlternative.Select(labels, l => l.LabelDel(il)).ToArray();
                         il.Emit(localOp, ls);
                     }
+
+                    if (log == null)
+                        return;
 
                     log.AppendLine(localOp + " " + Join(", ", ((LinqArray<Label>)labels).AsEnumerable()));
                 }
@@ -787,6 +845,9 @@ namespace Sigil.Impl
                             il.Emit(op, l);
                         }
 
+                        if (log == null)
+                            return;
+
                         log.AppendLine(op + " " + local);
                     }
             );
@@ -809,6 +870,9 @@ namespace Sigil.Impl
                     {
                         il.EmitCalli(op, callConventions, returnType, parameterTypes, null);
                     }
+
+                    if (log == null)
+                        return;
 
                     log.AppendLine(op + " " + callConventions + " " + returnType + " " + Join(" ", ((LinqArray<Type>)parameterTypes).AsEnumerable()));
                 }
@@ -835,6 +899,9 @@ namespace Sigil.Impl
                     {
                         il.EmitCall(op, method, arglist);
                     }
+
+                    if (log == null)
+                        return;
 
                     var mtdString = method is MethodBuilder ? method.Name : method.ToString();
 
@@ -878,6 +945,9 @@ namespace Sigil.Impl
                     {
                         il.EmitCalli(OpCodes.Calli, callingConvention, returnType, parameterTypes, arglist);
                     }
+
+                    if (log == null)
+                        return;
 
                     log.AppendLine(OpCodes.Calli + " " + callingConvention + " " + returnType + " " + Join(" ", (IEnumerable<Type>)parameterTypes) + " __arglist(" + Join(", ", arglist) + ")");
                 }
@@ -953,6 +1023,9 @@ namespace Sigil.Impl
                         il.BeginCatchBlock(exception);
                     }
 
+                    if (log == null)
+                        return;
+
                     log.AppendLine("--BeginCatchBlock(" + exception + ")--");
                 }
             );
@@ -976,6 +1049,9 @@ namespace Sigil.Impl
                         il.EndExceptionBlock();
                     }
 
+                    if (log == null)
+                        return;
+
                     log.AppendLine("--EndExceptionBlock--");
                 }
             );
@@ -994,6 +1070,9 @@ namespace Sigil.Impl
             Buffer.Add(
                 (il, logOnly, log) =>
                 {
+                    if (log == null)
+                        return;
+
                     log.AppendLine("--EndCatchBlock--");
                 }
             );
@@ -1017,6 +1096,9 @@ namespace Sigil.Impl
                         il.BeginFinallyBlock();
                     }
 
+                    if (log == null)
+                        return;
+
                     log.AppendLine("--BeginFinallyBlock--");
                 }
             );
@@ -1035,6 +1117,9 @@ namespace Sigil.Impl
             Buffer.Add(
                 (il, logOnly, log) =>
                 {
+                    if (log == null)
+                        return;
+
                     log.AppendLine("--EndFinallyBlock--");
                 }
             );
@@ -1100,6 +1185,9 @@ namespace Sigil.Impl
                         var l = label.LabelDel(il);
                         il.MarkLabel(l);
                     }
+
+                    if (log == null)
+                        return;
 
                     log.AppendLine();
                     log.AppendLine(label + ":");
