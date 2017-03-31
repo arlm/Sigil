@@ -119,8 +119,13 @@ namespace Sigil.Impl
             if (type1.IsPointer && type2 == TypeOnStack.Get<NativeIntType>()) return true;
             if (type2.IsPointer && type1 == TypeOnStack.Get<NativeIntType>()) return true;
 
-            if ((type1.IsPointer || type1.IsReference) && !(type2.IsPointer || type2.IsReference)) return false;
-            if ((type2.IsPointer || type2.IsReference) && !(type1.IsPointer || type1.IsReference)) return false;
+
+            // it's possible to assign a struct* to an interface or object
+            if (!(type2.IsPointerToValueType && (type1.IsInterface || type1.Type.Equals(typeof(object)))))
+            {
+                if ((type1.IsPointer || type1.IsReference) && !(type2.IsPointer || type2.IsReference)) return false;
+                if ((type2.IsPointer || type2.IsReference) && !(type1.IsPointer || type1.IsReference)) return false;
+            }
 
             if (type1.IsPointer || type1.IsReference)
             {
@@ -172,7 +177,7 @@ namespace Sigil.Impl
             if (t1 == typeof(object) && !TypeHelpers.IsValueType(t2)) return true;
 
             // you have to box in this case
-            if (t1 == typeof(object) && TypeHelpers.IsValueType(t2)) return false;
+            if ((t1 == typeof(object) || TypeHelpers.IsInterface(t1)) && TypeHelpers.IsValueType(t2)) return false;
 
             var t1Bases = GetBases(t1);
             var t2Bases = GetBases(t2);
@@ -181,7 +186,10 @@ namespace Sigil.Impl
 
             if (TypeHelpers.IsInterface(t1))
             {
-                var t2Interfaces = (LinqArray<Type>)t2.GetInterfaces();
+                var t2Interfaces =
+                    t2.IsPointer
+                        ? (LinqArray<Type>)t2.GetElementType().GetInterfaces()
+                        : (LinqArray<Type>)t2.GetInterfaces();
 
                 return t2Interfaces.Any(t2i => TypeOnStack.Get(t1).IsAssignableFrom(TypeOnStack.Get(t2i)));
             }

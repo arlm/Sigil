@@ -128,6 +128,42 @@ namespace SigilTests
         }
 
         [TestMethod]
+        public void CallInterfaceMethodOnValueTypeAddress()
+        {
+            // Issue #53. dispatch interface method to address of value type using constrained callvirt
+
+            var equals = typeof(IEquatable<int>).GetMethod("Equals");
+            var e1 = Emit<Func<int, bool>>.NewDynamicMethod();
+            e1.LoadArgumentAddress(0);
+            e1.LoadConstant(1);
+            e1.CallVirtual(equals, typeof(int));
+            e1.Return();
+
+            var d1 = e1.CreateDelegate();
+
+            Assert.IsTrue(d1(1));
+            Assert.IsFalse(d1(2));
+        }
+        [TestMethod]
+        public void CallObjectMethodOnValueTypeAddress()
+        {
+            // Issue #53. dispatch object method to address of value type using constrained callvirt
+
+            var toString = typeof(object).GetMethod("Equals", new[] { typeof(object) });
+            var e1 = Emit<Func<int, bool>>.NewDynamicMethod();
+            e1.LoadArgumentAddress(0);
+            e1.LoadConstant(1);
+            e1.Box<int>();
+            e1.CallVirtual(toString, typeof(int));
+            e1.Return();
+
+            var d1 = e1.CreateDelegate();
+
+            Assert.IsTrue(d1(1));
+            Assert.IsFalse(d1(2));
+        }
+
+        [TestMethod]
         public void MultipleTailcalls()
         {
             var toString = typeof(object).GetMethod("ToString");
