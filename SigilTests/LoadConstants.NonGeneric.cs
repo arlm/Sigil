@@ -172,6 +172,18 @@ namespace SigilTests
         }
 
         [TestMethod]
+        public void ConstructorNonGeneric()
+        {
+            var e1 = Emit.NewDynamicMethod(typeof(RuntimeMethodHandle), System.Type.EmptyTypes);
+            e1.LoadConstant(typeof(string).GetConstructor(new []{typeof(char), typeof(int)}));
+            e1.Return();
+
+            var d1 = e1.CreateDelegate<Func<RuntimeMethodHandle>>();
+
+            Assert.IsNotNull(d1());
+        }
+
+        [TestMethod]
         public void FieldNonGeneric()
         {
             var e1 = Emit.NewDynamicMethod(typeof(RuntimeFieldHandle), System.Type.EmptyTypes);

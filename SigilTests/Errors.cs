@@ -2673,6 +2673,20 @@ namespace SigilTests
 
                 try
                 {
+                    e1.LoadConstant((ConstructorInfo)null);
+                    Assert.Fail();
+                }
+                catch (ArgumentNullException e)
+                {
+                    Assert.AreEqual("constructor", e.ParamName);
+                }
+            }
+
+            {
+                var e1 = Emit<Action>.NewDynamicMethod();
+
+                try
+                {
                     e1.LoadConstant((FieldInfo)null);
                     Assert.Fail();
                 }

@@ -98,6 +98,15 @@ namespace Sigil.NonGeneric
         }
 
         /// <summary>
+        /// Push a constant RuntimeMethodHandle onto the stack.
+        /// </summary>
+        public Emit LoadConstant(ConstructorInfo constructor)
+        {
+            InnerEmit.LoadConstant(constructor);
+            return this;
+        }
+
+        /// <summary>
         /// Push a constant RuntimeTypeHandle onto the stack.
         /// </summary>
         public Emit LoadConstant<Type>()

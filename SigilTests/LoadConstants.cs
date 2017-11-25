@@ -172,6 +172,18 @@ namespace SigilTests
 
             Assert.IsNotNull(d1());
         }
+        
+        [TestMethod]
+        public void Constructor()
+        {
+            var e1 = Emit<Func<RuntimeMethodHandle>>.NewDynamicMethod();
+            e1.LoadConstant(typeof(string).GetConstructor(new []{typeof(char), typeof(int)}));
+            e1.Return();
+
+            var d1 = e1.CreateDelegate();
+
+            Assert.IsNotNull(d1());
+        }
 
         class FieldClass
         {

@@ -2511,6 +2511,7 @@ namespace Sigil
             {
                 var asFld = operands[0] as FieldInfo;
                 var asMtd = operands[0] as MethodInfo;
+                var asCtor = operands[0] as ConstructorInfo;
                 var asType = operands[0] as Type;
 
                 if (asFld != null)
@@ -2532,6 +2533,17 @@ namespace Sigil
                             OpCode = op,
                             Parameters = new object[] { asMtd },
                             Replay = emit => emit.LoadConstant(asMtd)
+                        };
+                }
+
+                if (asCtor != null)
+                {
+                    return
+                        new Operation<DelegateType>
+                        {
+                            OpCode = op,
+                            Parameters = new object[] { asCtor },
+                            Replay = emit => emit.LoadConstant(asCtor)
                         };
                 }
 

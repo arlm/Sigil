@@ -955,6 +955,14 @@ namespace Sigil
             return this;
         }
 
+        /// <summary cref="M:Sigil.Emit`1.LoadConstant(System.Reflection.ConstructorInfo)" />
+        public EmitShorthand<DelegateType> Ldtoken(ConstructorInfo constructor)
+        {
+            InnerEmit.LoadConstant(constructor);
+
+            return this;
+        }
+
         /// <summary cref="M:Sigil.Emit`1.LoadConstant(System.Type)" />
         public EmitShorthand<DelegateType> Ldtoken<Type>()
         {

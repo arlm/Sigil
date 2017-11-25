@@ -170,6 +170,21 @@ namespace Sigil
         }
 
         /// <summary>
+        /// Push a constant RuntimeMethodHandle onto the stack.
+        /// </summary>
+        public Emit<DelegateType> LoadConstant(ConstructorInfo constructor)
+        {
+            if (constructor == null)
+            {
+                throw new ArgumentNullException("constructor");
+            }
+
+            UpdateState(OpCodes.Ldtoken, constructor, TypeHelpers.EmptyTypes, Wrap(StackTransition.Push<RuntimeMethodHandle>(), "LoadConstant"));
+
+            return this;
+        }
+
+        /// <summary>
         /// Push a constant RuntimeTypeHandle onto the stack.
         /// </summary>
         public Emit<DelegateType> LoadConstant<Type>()

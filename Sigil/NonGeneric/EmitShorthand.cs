@@ -961,6 +961,14 @@ namespace Sigil.NonGeneric
             return this;
         }
 
+        /// <summary cref="M:Sigil.Emit.NonGeneric.Emit`1.LoadConstant(System.Reflection.ConstructorInfo)" />
+        public EmitShorthand Ldtoken(ConstructorInfo constructor)
+        {
+            InnerEmit.LoadConstant(constructor);
+
+            return this;
+        }
+
         /// <summary cref="M:Sigil.Emit.NonGeneric.Emit`1.LoadConstant(System.Type)" />
         public EmitShorthand Ldtoken<Type>()
         {
