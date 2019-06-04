@@ -63,7 +63,8 @@ namespace Sigil.NonGeneric
                 methodInfo = dynMethod;
             }
 
-            return Call(methodInfo, arglist);
+            InnerEmit.Call(emit.InnerEmit, arglist);
+            return this;
         }
     }
 }

@@ -47,10 +47,10 @@ namespace SigilTests
             e1.LoadArgument(1);
             e1.UnsignedMultiplyOverflow();
             e1.Return();
-
-            var d1 = e1.CreateDelegate();
-
-            Assert.AreEqual(3.14 * 1.59, d1(3.14, 1.59));
+            string i;
+            var d1 = e1.CreateDelegate(out i);
+            double d2 = 3.14 * 1.59;
+                Assert.AreEqual(d2, d1(3.14, 1.59));
         }
     }
 }

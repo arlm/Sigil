@@ -177,7 +177,7 @@ namespace Sigil.NonGeneric
         /// the returned delegate fails validation (indicative of a bug in Sigil) or
         /// behaves unexpectedly (indicative of a logic bug in the consumer code).
         /// </summary>
-        public Delegate CreateDelegate(Type delegateType, out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All)
+        public Delegate CreateDelegate(Type delegateType, out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All, bool logInstructions = true)
         {
             if (EmitType != NonGenericEmitType.DynamicMethod)
             {
@@ -199,7 +199,7 @@ namespace Sigil.NonGeneric
                 return CreatedDelegate;
             }
 
-            CreatedDelegate = InnerEmit.InnerCreateDelegate(delegateType, out instructions, optimizationOptions);
+            CreatedDelegate = InnerEmit.InnerCreateDelegate(delegateType, out instructions, optimizationOptions, logInstructions);
 
             return CreatedDelegate;
         }
@@ -215,7 +215,7 @@ namespace Sigil.NonGeneric
         public Delegate CreateDelegate(Type delegateType, OptimizationOptions optimizationOptions = OptimizationOptions.All)
         {
             string ignored;
-            return CreateDelegate(delegateType, out ignored, optimizationOptions);
+            return CreateDelegate(delegateType, out ignored, optimizationOptions, false);
         }
 
         /// <summary>
@@ -232,9 +232,9 @@ namespace Sigil.NonGeneric
         /// the returned delegate fails validation (indicative of a bug in Sigil) or
         /// behaves unexpectedly (indicative of a logic bug in the consumer code).
         /// </summary>
-        public DelegateType CreateDelegate<DelegateType>(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All)
+        public DelegateType CreateDelegate<DelegateType>(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All, bool logInstructions = true)
         {
-            return (DelegateType)(object)CreateDelegate(typeof(DelegateType), out instructions, optimizationOptions);
+            return (DelegateType)(object)CreateDelegate(typeof(DelegateType), out instructions, optimizationOptions, logInstructions);
         }
 
         /// <summary>
@@ -248,7 +248,7 @@ namespace Sigil.NonGeneric
         public DelegateType CreateDelegate<DelegateType>(OptimizationOptions optimizationOptions = OptimizationOptions.All)
         {
             string ignored;
-            return CreateDelegate<DelegateType>(out ignored, optimizationOptions);
+            return CreateDelegate<DelegateType>(out ignored, optimizationOptions, false);
         }
 
         private static bool HasFlag(CallingConventions value, CallingConventions flag)
@@ -345,7 +345,7 @@ namespace Sigil.NonGeneric
         /// the returned method fails validation (indicative of a bug in Sigil) or
         /// behaves unexpectedly (indicative of a logic bug in the consumer code).
         /// </summary>
-        public MethodBuilder CreateMethod(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All)
+        public MethodBuilder CreateMethod(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All, bool logInstructions = false)
         {
             if (EmitType != NonGenericEmitType.Method)
             {
@@ -362,7 +362,7 @@ namespace Sigil.NonGeneric
 
             InnerEmit.MtdBuilder = methodBuilder;
 
-            CreatedMethod = InnerEmit.CreateMethod(out instructions, optimizationOptions);
+            CreatedMethod = InnerEmit.CreateMethod(out instructions, optimizationOptions, logInstructions);
 
             return CreatedMethod;
         }
@@ -380,7 +380,7 @@ namespace Sigil.NonGeneric
         public MethodBuilder CreateMethod(OptimizationOptions optimizationOptions = OptimizationOptions.All)
         {
             string ignored;
-            return CreateMethod(out ignored, optimizationOptions);
+            return CreateMethod(out ignored, optimizationOptions, false);
         }
 
         /// <summary>
@@ -484,7 +484,7 @@ namespace Sigil.NonGeneric
         /// the returned constructor fails validation (indicative of a bug in Sigil) or
         /// behaves unexpectedly (indicative of a logic bug in the consumer code).
         /// </summary>
-        public ConstructorBuilder CreateConstructor(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All)
+        public ConstructorBuilder CreateConstructor(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All, bool logInstructions = true)
         {
             if (EmitType != NonGenericEmitType.Constructor)
             {
@@ -501,7 +501,7 @@ namespace Sigil.NonGeneric
 
             InnerEmit.ConstrBuilder = constructorBuilder;
 
-            CreatedConstructor = InnerEmit.CreateConstructor(out instructions, optimizationOptions);
+            CreatedConstructor = InnerEmit.CreateConstructor(out instructions, optimizationOptions, logInstructions);
 
             return CreatedConstructor;
         }
@@ -519,7 +519,7 @@ namespace Sigil.NonGeneric
         public ConstructorBuilder CreateConstructor(OptimizationOptions optimizationOptions = OptimizationOptions.All)
         {
             string ignored;
-            return CreateConstructor(out ignored, optimizationOptions);
+            return CreateConstructor(out ignored, optimizationOptions, false);
         }
 
         /// <summary>
@@ -538,7 +538,7 @@ namespace Sigil.NonGeneric
         /// the returned constructor fails validation (indicative of a bug in Sigil) or
         /// behaves unexpectedly (indicative of a logic bug in the consumer code).
         /// </summary>
-        public ConstructorBuilder CreateTypeInitializer(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All) 
+        public ConstructorBuilder CreateTypeInitializer(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All, bool logInstructions = true) 
         {
             if (EmitType != NonGenericEmitType.TypeInitializer) {
                 throw new InvalidOperationException("Emit was not created to build a type initializer, thus CreateTypeInitializer cannot be called");
@@ -553,7 +553,7 @@ namespace Sigil.NonGeneric
 
             InnerEmit.ConstrBuilder = constructorBuilder;
 
-            CreatedConstructor = InnerEmit.CreateTypeInitializer(out instructions, optimizationOptions);
+            CreatedConstructor = InnerEmit.CreateTypeInitializer(out instructions, optimizationOptions, logInstructions);
 
             return CreatedConstructor;
         }
@@ -571,7 +571,7 @@ namespace Sigil.NonGeneric
         public ConstructorBuilder CreateTypeInitializer(OptimizationOptions optimizationOptions = OptimizationOptions.All) 
         {
             string ignored;
-            return CreateTypeInitializer(out ignored, optimizationOptions);
+            return CreateTypeInitializer(out ignored, optimizationOptions, false);
         }
 
         /// <summary>
