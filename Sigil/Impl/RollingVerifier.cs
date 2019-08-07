@@ -322,7 +322,7 @@ namespace Sigil.Impl
             return VerificationResult.Successful();
         }
 
-        private SigilTuple<bool, LinqStack<LinqList<TypeOnStack>>> GetCurrentStack()
+        internal SigilTuple<bool, LinqStack<LinqList<TypeOnStack>>> GetCurrentStack()
         {
             SigilTuple<bool, LinqStack<LinqList<TypeOnStack>>> ret = null;
             for(var i = 0; i < CurrentlyInScope.Count; i++)

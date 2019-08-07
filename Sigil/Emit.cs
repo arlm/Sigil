@@ -122,6 +122,29 @@ namespace Sigil
 
 		private readonly RollingVerifier CurrentVerifiers;
 
+        /// <summary>
+		/// The list of potential types on the current stack.
+		/// </summary>
+		public Type[][] Stack
+        {
+            get
+            {
+                return CurrentVerifiers.GetCurrentStack().Item2.Select(sl => sl.Select(si => si.Type).ToArray()).ToArray();
+            }
+        }
+
+        /// <summary> 
+        /// If false, the current location is not reachable.  This is useful information, for instance, when 
+        /// emitting an expression statement where the result is to be discarded, but the emitted node is a throw.
+        /// </summary>
+        public bool IsReachable
+        {
+            get
+            {
+                return !MustMark;
+            }
+        }
+
         private bool MustMark;
 
         private readonly LinqList<int> ElidableCasts;
