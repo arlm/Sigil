@@ -299,12 +299,12 @@ namespace Sigil
             return ret;
         }
 
-        internal Delegate InnerCreateDelegate(Type delegateType, out string instructions, OptimizationOptions optimizationOptions)
+        internal Delegate InnerCreateDelegate(Type delegateType, out string instructions, OptimizationOptions optimizationOptions, bool logInstructions = true)
         {
             Seal(optimizationOptions);
 
             var il = DynMethod.GetILGenerator();
-            instructions = IL.UnBuffer(il);
+            instructions = IL.UnBuffer(il, logInstructions);
 
             AutoNamer.Release(this);
 
@@ -325,7 +325,7 @@ namespace Sigil
         /// the returned delegate fails validation (indicative of a bug in Sigil) or
         /// behaves unexpectedly (indicative of a logic bug in the consumer code).
         /// </summary>
-        public DelegateType CreateDelegate(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All)
+        public DelegateType CreateDelegate(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All, bool logInstructions = true)
         {
             if (DynMethod == null)
             {
@@ -338,7 +338,7 @@ namespace Sigil
                 return CreatedDelegate;
             }
 
-            CreatedDelegate = (DelegateType)(object)InnerCreateDelegate(typeof(DelegateType), out instructions, optimizationOptions);
+            CreatedDelegate = (DelegateType)(object)InnerCreateDelegate(typeof(DelegateType), out instructions, optimizationOptions, logInstructions);
 
             return CreatedDelegate;
         }
@@ -372,7 +372,7 @@ namespace Sigil
         /// the returned method fails validation (indicative of a bug in Sigil) or
         /// behaves unexpectedly (indicative of a logic bug in the consumer code).
         /// </summary>
-        public MethodBuilder CreateMethod(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All)
+        public MethodBuilder CreateMethod(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All, bool logInstructions = true)
         {
             if (MtdBuilder == null)
             {
@@ -390,7 +390,7 @@ namespace Sigil
             MethodBuilt = true;
 
             var il = MtdBuilder.GetILGenerator();
-            instructions = IL.UnBuffer(il);
+            instructions = IL.UnBuffer(il, logInstructions);
 
             AutoNamer.Release(this);
 
@@ -428,7 +428,7 @@ namespace Sigil
         /// the returned constructor fails validation (indicative of a bug in Sigil) or
         /// behaves unexpectedly (indicative of a logic bug in the consumer code).
         /// </summary>
-        public ConstructorBuilder CreateConstructor(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All)
+        public ConstructorBuilder CreateConstructor(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All, bool logInstructions = true)
         {
             if (ConstrBuilder == null || !IsBuildingConstructor)
             {
@@ -446,7 +446,7 @@ namespace Sigil
             Seal(optimizationOptions);
 
             var il = ConstrBuilder.GetILGenerator();
-            instructions = IL.UnBuffer(il);
+            instructions = IL.UnBuffer(il, logInstructions);
 
             AutoNamer.Release(this);
 
@@ -484,7 +484,7 @@ namespace Sigil
         /// the returned constructor fails validation (indicative of a bug in Sigil) or
         /// behaves unexpectedly (indicative of a logic bug in the consumer code).
         /// </summary>
-        public ConstructorBuilder CreateTypeInitializer(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All) 
+        public ConstructorBuilder CreateTypeInitializer(out string instructions, OptimizationOptions optimizationOptions = OptimizationOptions.All, bool logInstructions = true) 
         {
             if (ConstrBuilder == null || IsBuildingConstructor) 
             {
@@ -502,7 +502,7 @@ namespace Sigil
             Seal(optimizationOptions);
 
             var il = ConstrBuilder.GetILGenerator();
-            instructions = IL.UnBuffer(il);
+            instructions = IL.UnBuffer(il, logInstructions);
 
             AutoNamer.Release(this);
 
